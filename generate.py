@@ -10,7 +10,25 @@ ROWS = 6
 COLUMNS = 3
 GENERATE_TITLE_PAGE = True
 ANSWERS_PER_ROW = 4
+ANSWER_ROW_SPACING = 2.5
 
+def escape_percent(text):
+    return re.sub(r"(?<!\\)%", r"\\%", text)
+
+def format_multiline_task(lines):
+    formatted = []
+
+    for line in lines:
+        if line:
+            formatted.append(line + r" \\")
+        else:
+            formatted.append(r"\mbox{} \\")
+
+    # Fjern \\ fra siste linje
+    if formatted:
+        formatted[-1] = formatted[-1].removesuffix(r" \\")
+
+    return "\n".join(formatted)
 
 def parse_hefte(input_file):
     title = ""
@@ -19,17 +37,55 @@ def parse_hefte(input_file):
     current_section = None
     reading_answers = False
 
-    with input_file.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
+    reading_multiline_task = False
+    multiline_task_lines = []
 
+    with input_file.open("r", encoding="utf-8") as file:
+        for raw_line in file:
+            line = raw_line.strip()
+
+            # -------------------------------------------------
+            # Vi er inne i en flerlinjeoppgave
+            # -------------------------------------------------
+            if reading_multiline_task:
+
+                if line == "ENDTASK":
+                    if current_section is None:
+                        raise ValueError(
+                            "Fant ENDTASK før noen SUBTITLE."
+                        )
+
+                    task_text = format_multiline_task(
+                        multiline_task_lines
+                    )
+
+                    current_section["tasks"].append(task_text)
+
+                    multiline_task_lines = []
+                    reading_multiline_task = False
+
+                else:
+                    # Viktig: også tomme linjer tas vare på her
+                    multiline_task_lines.append(line)
+
+                continue
+
+            # -------------------------------------------------
+            # Utenfor TASK ignorerer vi tomme linjer
+            # -------------------------------------------------
             if not line:
                 continue
 
+            # -------------------------------------------------
+            # Tittel
+            # -------------------------------------------------
             if line.startswith("TITLE:"):
                 title = line.removeprefix("TITLE:").strip()
                 continue
 
+            # -------------------------------------------------
+            # Ny seksjon
+            # -------------------------------------------------
             if line.startswith("SUBTITLE:"):
                 subtitle = line.removeprefix("SUBTITLE:").strip()
 
@@ -42,12 +98,18 @@ def parse_hefte(input_file):
                 }
 
                 sections.append(current_section)
+
                 reading_answers = False
                 continue
 
+            # -------------------------------------------------
+            # Grid for gjeldende seksjon
+            # -------------------------------------------------
             if line.startswith("GRID:"):
                 if current_section is None:
-                    raise ValueError("GRID må stå etter en SUBTITLE.")
+                    raise ValueError(
+                        "GRID må stå etter en SUBTITLE."
+                    )
 
                 grid = line.removeprefix("GRID:").strip().lower()
 
@@ -55,23 +117,58 @@ def parse_hefte(input_file):
                     columns, rows = grid.split("x")
                     columns = int(columns)
                     rows = int(rows)
+
                 except ValueError:
                     raise ValueError(
-                        f"Ugyldig GRID-format: {grid}. Bruk for eksempel GRID: 3x4"
+                        f"Ugyldig GRID-format: {grid}. "
+                        "Bruk for eksempel GRID: 3x4"
                     )
 
                 if columns < 1 or rows < 1:
-                    raise ValueError("GRID må ha minst 1 kolonne og 1 rad.")
+                    raise ValueError(
+                        "GRID må ha minst 1 kolonne og 1 rad."
+                    )
 
                 current_section["columns"] = columns
                 current_section["rows"] = rows
 
                 continue
 
+            # -------------------------------------------------
+            # Start flerlinjeoppgave
+            # -------------------------------------------------
+            if line == "TASK":
+                if current_section is None:
+                    raise ValueError(
+                        "TASK må stå etter en SUBTITLE."
+                    )
+
+                if reading_answers:
+                    raise ValueError(
+                        "TASK kan ikke stå etter FASIT "
+                        "i samme seksjon."
+                    )
+
+                reading_multiline_task = True
+                multiline_task_lines = []
+
+                continue
+
+            # -------------------------------------------------
+            # Start fasit
+            # -------------------------------------------------
             if line == "FASIT":
+                if current_section is None:
+                    raise ValueError(
+                        "FASIT må stå etter en SUBTITLE."
+                    )
+
                 reading_answers = True
                 continue
 
+            # -------------------------------------------------
+            # Vanlig innhold
+            # -------------------------------------------------
             if current_section is None:
                 raise ValueError(
                     f"Fant innhold før første SUBTITLE: {line}"
@@ -82,8 +179,16 @@ def parse_hefte(input_file):
             else:
                 current_section["tasks"].append(line)
 
-    return title, sections
+    # -------------------------------------------------
+    # Hvis filen slutter midt i en TASK
+    # -------------------------------------------------
+    if reading_multiline_task:
+        raise ValueError(
+            "Filen sluttet før ENDTASK. "
+            "En TASK-blokk mangler altså ENDTASK."
+        )
 
+    return title, sections
 
 def make_filename(title):
     filename = title.lower()
@@ -119,6 +224,7 @@ def create_task_grid(tasks, rows, columns):
     latex = ""
 
     for i, task in enumerate(tasks):
+        task = escape_percent(task)
         position_on_page = i % tasks_per_page
 
         if position_on_page == 0:
@@ -135,11 +241,11 @@ def create_task_grid(tasks, rows, columns):
         label = task_label(i)
 
         latex += rf"""
-\begin{{minipage}}[t][{cell_height:.3f}\textheight][t]{{{cell_width:.3f}\textwidth}}
-\raggedright
-\textbf{{{label})}} \(\displaystyle {task}\)
-\end{{minipage}}
-"""
+            \begin{{minipage}}[t][{cell_height:.3f}\textheight][t]{{{cell_width:.3f}\textwidth}}
+            \raggedright
+            \textbf{{{label})}} {task}
+            \end{{minipage}}
+            """
 
         column = position_on_page % columns
 
@@ -159,26 +265,27 @@ def create_task_grid(tasks, rows, columns):
 
 def create_answers(sections):
     latex = r"""
-\newpage
+        \newpage
 
-\section*{Fasit}
-"""
+        \section*{Fasit}
+        """
 
 
     for section in sections:
         latex += rf"""
-\subsection*{{{section["title"]}}}
+            \subsection*{{{section["title"]}}}
 
-\renewcommand{{\arraystretch}}{{1.8}}
-\begin{{tabular}}{{{"l" * ANSWERS_PER_ROW}}}
-"""
+            \renewcommand{{\arraystretch}}{{{ANSWER_ROW_SPACING}}}
+            \begin{{tabular}}{{{"l" * ANSWERS_PER_ROW}}}
+            """
 
         for i, answer in enumerate(section["answers"]):
+            answer = escape_percent(answer)
             label = task_label(i)
 
             latex += rf"""
-\textbf{{{label})}} \(\displaystyle {answer}\)
-"""
+                \textbf{{{label})}} {answer}
+                """
 
             if (i + 1) % ANSWERS_PER_ROW == 0:
                 latex += r"\\" + "\n"
@@ -190,60 +297,60 @@ def create_answers(sections):
             latex += r"\\" + "\n"
 
         latex += r"""
-\end{tabular}
+            \end{tabular}
 
-\vspace{1em}
+            \vspace{1em}
 
-"""
+            """
 
     return latex
 
 
 def create_latex(title, sections):
     latex = r"""
-\documentclass[a4paper,12pt]{article}
+        \documentclass[a4paper,12pt]{article}
 
-\usepackage[margin=1.5cm]{geometry}
-\usepackage{amsmath}
-\usepackage{array}
-\usepackage{fancyhdr}
+        \usepackage[margin=1.5cm]{geometry}
+        \usepackage{amsmath}
+        \usepackage{array}
+        \usepackage{fancyhdr}
 
-\setlength{\parindent}{0pt}
+        \setlength{\parindent}{0pt}
 
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0pt}
+        \pagestyle{fancy}
+        \fancyhf{}
+        \fancyfoot[C]{\thepage}
+        \renewcommand{\headrulewidth}{0pt}
 
-\begin{document}
-"""
+        \begin{document}
+        """
 
     if GENERATE_TITLE_PAGE:
         latex += rf"""
-\begin{{titlepage}}
-\thispagestyle{{empty}}
+            \begin{{titlepage}}
+            \thispagestyle{{empty}}
 
-\vspace*{{0.30\textheight}}
+            \vspace*{{0.30\textheight}}
 
-\begin{{center}}
-{{\Huge\bfseries {title}}}
-\end{{center}}
+            \begin{{center}}
+            {{\Huge\bfseries {title}}}
+            \end{{center}}
 
-\vfill
+            \vfill
 
-\end{{titlepage}}
+            \end{{titlepage}}
 
-\setcounter{{page}}{{1}}
-"""
+            \setcounter{{page}}{{1}}
+            """
 
     for section_index, section in enumerate(sections):
         if section_index > 0:
             latex += "\\newpage\n"
 
         latex += rf"""
-\section*{{{section["title"]}}}
+            \section*{{{section["title"]}}}
 
-"""
+            """
 
         latex += create_task_grid(
             section["tasks"],
@@ -254,8 +361,8 @@ def create_latex(title, sections):
     latex += create_answers(sections)
 
     latex += r"""
-\end{document}
-"""
+        \end{document}
+        """
 
     return latex
 

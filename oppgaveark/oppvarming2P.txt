@@ -1,0 +1,250 @@
+TITLE: Oppvarming 2P
+
+SUBTITLE: Prosent til desimaltall
+GRID: 4x5
+
+40%
+35%
+87%
+13%
+
+0,1%
+2%
+5%
+300%
+
+17%
+68%
+15,3%
+18,9%
+
+55%
+982%
+50,2%
+0,123%
+
+0,05%
+72%
+123%
+9%
+
+FASIT
+
+0,4
+0,35
+0,87
+0,13
+
+0,001
+0,02
+0,05
+3
+
+0,17
+0,68
+0,153
+0,189
+
+0,55
+9,82
+0,502
+0,00123
+
+0,0005
+0,72
+1,23
+0,09
+
+SUBTITLE: Desimaltall til prosent
+GRID: 4x5
+
+0,45
+0,98
+0,20
+0,13
+
+0,02
+0,0045
+0,081
+0,407
+
+1,25
+1,062
+0,0625
+3
+
+0,7
+0,79
+0,123
+0,523
+
+1,5
+2,7
+0,001
+0,01003
+
+FASIT
+
+45%
+98%
+20%
+13%
+
+2%
+0,45%
+8,1%
+40,7%
+
+125%
+106,2%
+6,25%
+300%
+
+70%
+79%
+12,3%
+52,3%
+
+150%
+270%
+0,1%
+1,003%
+
+SUBTITLE: Regn ut
+GRID: 4x4
+
+60% av 300
+40% av 250
+10% av 670
+80% av 80
+
+4% av 400
+9% av 800
+2% av 1200
+5% av 650
+
+15% av 600
+18% av 500
+34% av 2000
+99% av 9000
+
+60% av 720
+55% av 250
+25% av 1280
+97% av 123
+
+FASIT
+
+180
+100
+67
+64
+
+16
+72
+24
+32,5
+
+90
+90
+680
+8910
+
+432
+137,5
+320
+119,31
+
+SUBTITLE: Finn vekstfaktoren
+GRID: 4x5
+
+5% økning
+13% økning
+29% økning
+100% økning
+
+5% nedgang
+9% nedgang
+28% nedgang
+55% nedgang
+
+10,2% økning
+4,03% økning
+6,55% økning
+13,10% økning
+
+9,5% økning
+12,8% økning
+10,2% økning
+24,5% økning
+
+0,05% økning
+0,0501% økning
+0,05% nedgang
+0,051% nedgang
+
+FASIT
+
+1,05
+1,13
+1,29
+2
+
+0,95
+0,91
+0,72
+0,45
+
+1,102
+1,0403
+1,0655
+1,131
+
+0,905
+0,872
+0,898
+0,755
+
+1,0005
+1,000501
+0,9995
+0,99949
+
+SUBTITLE: Sett opp regnestykket
+GRID: 1x6
+
+Du setter 25 000 kr på en sparekonto med 4% renter. Hvor mye er det på kontoen om 3 år?
+Du kjøper en bil til 300 000 kr. Verdien synker med 11% hvert år. Hvor mye er bilen verdt etter 8 år?
+Verdien på leiligheten din har steget med 3,5% de siste fem årene. I dag er verdien 6 millioner. Hva var verdien for 5 år siden?
+Prisen på en vare økte med 5% to ganger og 8% tre ganger. Før endringene kostet den 2500 kroner. Hvor mye koster den nå?
+Prisen på en aksje økte med 4,8% tre år på rad. Det fjerde året sank prisen med 10%. Nå er prisen 70 kroner. Hva kostet aksen for 4 år siden?
+Hvis den månedlige renten på en sparekonto er 0,38%, hvor stor er den årlige renten?
+
+FASIT
+
+$25000 \cdot 1.04^3$
+$300000\cdot 0.89^{11}$
+$6\cdot1.035^{-5}$
+$2500 \cdot 1.05^2 \cdot 1.08^3$
+$70\cdot1.048^{-3}\cdot0.90^{-1}$
+$1.0038^{12}$
+
+
+SUBTITLE: Prosentvis forskjell = (forskjell) / (det du sammenlikner med) 
+GRID: 1x6
+
+Prisen på et månedskort stiger fra 300 kr til 315 kr. Hvor stor er den prosentvise økningen?
+På en skole tar 25 elever tysk og 30 elever spansk. Hvor mange prosent flere tar spansk, sammenliknet med tysk?
+På en skole tar 25 elever tysk og 30 elever spansk. Hvor mange prosent færre tar tysk, sammenliknet med spansk?
+Prisen på en databrus er 35 kroner på bensinstasjonen og 28 kroner på matbutikken. Hvor mye billigere er databrusen på matbutikken?
+I et skolevalg fikk "norsk tulleparti" 2% av stemmene. Ved neste skolevalg fikk de 5% av stemmene. Hvor mange prosent flere stemmer fikk de ved det andre valget?
+Ifølge en nettside forbruker en gjennomsnittlig nordmann 6,6 kg kaffebønner i året, mens en franskmann bare forbruker 3,4 kg. Hvor mange prosent mer kaffe forbruker vi i Norge?
+
+FASIT
+
+5%
+20%
+16,7%
+20%
+150%
+94,1%
